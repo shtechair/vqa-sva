@@ -17,7 +17,7 @@ To reproduce the experimental results,
 
 ## Training from scratch
 
-Run `train_VQA.py`
+Set the arguments and run `train_VQA.py`.
 
 ## Pretrained models
 Coming soon.
