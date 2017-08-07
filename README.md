@@ -20,7 +20,7 @@ To reproduce the experimental results,
 Set the arguments and run `train_VQA.py`.
 
 ## Pretrained models
-Coming soon.
+Coming soon. The best single model accuracy on `test-dev` of VQA-1.0 and VQA-2.0 with skip-thought vector initialization and Visual Genome training data are **67.19** and **64.73** respectively.
 
 ## Citation
 
@@ -37,5 +37,4 @@ If you found this repository helpful, you could cite
 
 ## Licence
 This code is distributed under MIT LICENSE.
-
 
