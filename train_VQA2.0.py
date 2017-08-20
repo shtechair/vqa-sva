@@ -8,13 +8,12 @@ from loaders import *
 
 parser = argparse.ArgumentParser(description='Structured Visual Attention on the VQA dataset')
 parser.add_argument('--qa-path', type=str, 
-                    default='/rundata/vqa1.0/qalist_train+val_sampling.pkl,'
-                            '/rundata/vqa1.0/vg_qalist_sampling.pkl',
+                    default='/rundata/vqa2.0/train+val+vg_train_sampling.pkl',
                     help='path to the questions ans answers, comma without space for separation')
 parser.add_argument('--lmdb-path', type=str, default='/rundata/coco_res152_lmdb')
 parser.add_argument('--skip-thought-dict', type=str, default='/rundata/vqa1.0/skip-argdict.pkl',
                     help='initialize the GRU for skip-thought vector')
-parser.add_argument('--chk-path', type=str, default='./chk/vqa-sva',
+parser.add_argument('--chk-path', type=str, default='/hdd1/chk/vqa-sva',
                     help='path to store the checkpoints')
 parser.add_argument('--gpus', type=str, default='0',
                     help='which gpu(s) for training, e.g., 0,1,2,3')
@@ -23,20 +22,20 @@ parser.add_argument('--test-gpu', type=int, default=0,
 
 parser.add_argument('--qdp', type=float, default=0.25,
                     help='dropout for Bayesian GRU')
-parser.add_argument('--gdp', type=float, default=0.5,
+parser.add_argument('--gdp', type=float, default=0.25,
                     help='general dropout ratio (for other layers)')
 parser.add_argument('--cdm', type=int, default=1200,
                     help='common embedding dimension for MLB')
 parser.add_argument('--crf-iter', type=int, default=3,
                     help='number of MF/LBP iterations')
-parser.add_argument('--uni-mag', type=float, default=0.05,
+parser.add_argument('--uni-mag', type=float, default=0.04,
                     help='magnitude of the random uniform initialization')
 
 parser.add_argument('--batch-size', type=int, default=300,
                     help='batch size')
 parser.add_argument('--test-batch-size', type=int, default=256,
                     help='batch size for validation')
-parser.add_argument('--lr', type=float, default=4e-4,
+parser.add_argument('--lr', type=float, default=2e-4,
                     help='learning rate')
 parser.add_argument('--wd', type=float, default=0,
                     help='weight decay')
@@ -78,15 +77,15 @@ else:
 
 ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')]
 
-net = MF_accelerate(args.batch_size, is_train=True, general_dp=args.gdp, qemb_dp=args.qdp,
+net = MF_accelerate(args.batch_size, is_train=True, seq_len=25, general_dp=args.gdp, qemb_dp=args.qdp,
                     crf_iter=args.crf_iter, common_embed_size=args.cdm, epot_common_dim=args.cdm,
                     n_gpus=len(ctx), w=14, h=14, idim=2048, n_ans=2000)
 
 train_iter = VQAIter(qa_path=args.qa_path,
                      lmdb_path=args.lmdb_path,
                      batch_size=args.batch_size, 
-                     is_train=True,
-                     net=net)
+                     is_train=True, max_seq_len=25,
+                     net=net, seed=args.seed)
 
 if args.lr_factor_epoch>0:
     step = args.lr_factor_epoch*(train_iter.n_total // args.batch_size)

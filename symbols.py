@@ -207,7 +207,7 @@ def meanfield_accelerate(epot_v_h, epot_v_v, epot_s, horizontal_zeros, vertical_
     return attn
 
 def MF_accelerate(batch_size, is_train, general_dp=.0, qemb_dp=.0,
-                  crf_iter=3, common_embed_size=1200, epot_common_dim=1200,
+                  crf_iter=3, seq_len=26, common_embed_size=1200, epot_common_dim=1200,
                   n_gpus=1, w=14, h=14, idim=2048, n_ans=2000):
     """
     The accelerated version of MF.
@@ -234,7 +234,7 @@ def MF_accelerate(batch_size, is_train, general_dp=.0, qemb_dp=.0,
     ifeature_map_epot = ifeature_map if general_dp==0 else mx.sym.Dropout(ifeature_map, p=general_dp)
 
     # some constants are from skip thought vector
-    qembed = GRU_sent_encoder(batch_size, 26, 15031, 2400, 620, 
+    qembed = GRU_sent_encoder(batch_size, seq_len, 15031, 2400, 620, 
                               dropout=qemb_dp, is_train=is_train, n_gpus=n_gpus)
 
     # get the projected potentials with convolutions for acceleration

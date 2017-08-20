@@ -30,7 +30,7 @@ class SimpleBatch(object):
 class VQAIter(mx.io.DataIter):
     def __init__(self, qa_path, lmdb_path, batch_size, 
                  max_seq_len=26, sent_gru_hsize=2400,  
-                 is_train=True, net=None, w=14, h=14):
+                 is_train=True, net=None, w=14, h=14, seed=1234):
         """
         Data loader for the VQA dataset.abs
 
@@ -40,7 +40,7 @@ class VQAIter(mx.io.DataIter):
         is_train: use answer sampling if set to True
         """
         super(VQAIter, self).__init__()
-        random.seed(1234)
+        random.seed(seed)
         qa_paths = qa_path.split(',')
         logging.info("QA data paths:{}".format(qa_paths))
         env = lmdb.open(lmdb_path, readonly=True)
@@ -79,6 +79,7 @@ class VQAIter(mx.io.DataIter):
                     n_params += np.prod(shape)
             logging.info("Total number of parameters:%d, i.e., %.2f M params", n_params, n_params/1e6)
 
+        self.last_batch_size=None # signaling the changed batch size
         self.n_total = len(self.qa_list)
         self.reset()
 
@@ -102,35 +103,35 @@ class VQAIter(mx.io.DataIter):
                 qid_list.append(bdata['qid'])
                 if self.is_train:
                     self.label_buffer[0][bidx] = np.random.choice(bdata['ans_cans'], p=bdata['ans_p'])
-                if not self.is_train and len(bdata['ans_all'])>0:
-                    # for VQA scoring
-                    candidate_ans[bidx] = bdata['ans_all']
+                #if not self.is_train and len(bdata['ans_all'])>0:
+                    # for VQA validation only
+                    #candidate_ans[bidx] = bdata['ans_all']
 
             yield SimpleBatch(self.data_names, [mx.nd.array(arr) for arr in self.data_buffer],
                               self.label_names, [mx.nd.array(arr) for arr in self.label_buffer], 
-                              qid=qid_list, ans_all=candidate_ans)
+                              qid=qid_list)#, ans_all=candidate_ans)
 
         # check if need to add an incomplete batch at validation
         if not self.is_train and curr_idx < self.n_total-self.batch_size:
             curr_idx += self.batch_size
-            last_batch_size = n_total - curr_idx
-            print("last_batch_size {}".format(last_batch_size))
-            candidate_ans = np.zeros((last_batch_size, 10), dtype=np.int32)
+            self.last_batch_size = self.n_total - curr_idx
+            print("last_batch_size {}".format(self.last_batch_size))
+            candidate_ans = np.zeros((self.last_batch_size, 10), dtype=np.int32)
             # change the shape of buffer files
-            data_buffer=[np.zeros([last_batch_size]+list(shape[1:])) for name, shape in self.provide_data]
-            label_buffer=[np.zeros([last_batch_size]+list(shape[1:])) for name, shape in self.provide_label]
+            data_buffer=[np.zeros([self.last_batch_size]+list(shape[1:])) for name, shape in self.provide_data]
+            label_buffer=[np.zeros([self.last_batch_size]+list(shape[1:])) for name, shape in self.provide_label]
             qid_list=[]
-            for bidx in range(last_batch_size):
+            for bidx in range(self.last_batch_size):
                 bdata = self.qa_list[bidx+curr_idx]
                 data_buffer[0][bidx,:,:] = pickle.loads(self.txn.get(bdata['img_path'])).toarray()
                 data_buffer[1][bidx, :] = bdata['ques']
                 data_buffer[2][bidx, :] = bdata['qmask']
                 
                 qid_list.append(bdata['qid'])
-                if len(bdata['ans_all'])>0:
-                    label_buffer[0][bidx] = np.random.choice(bdata['ans_cans'], p=bdata['ans_p'])
-                    candidate_ans[bidx] = bdata['ans_all']
+                #if len(bdata['ans_all'])>0:
+                    #label_buffer[0][bidx] = np.random.choice(bdata['ans_cans'], p=bdata['ans_p'])
+                    #candidate_ans[bidx] = bdata['ans_all']
 
             yield SimpleBatch(self.data_names, [mx.nd.array(arr) for arr in data_buffer],
                               self.label_names, [mx.nd.array(arr) for arr in label_buffer], 
-                              qid=qid_list, ans_all=candidate_ans)
+                              qid=qid_list)#, ans_all=candidate_ans)
