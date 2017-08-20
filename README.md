@@ -13,14 +13,14 @@ To reproduce the experimental results,
 
 * ResNet-152 feature of MS COCO images: extracted with [MCB's preprocess code](https://github.com/akirafukui/vqa-mcb). 
 
-* Our training question and answer data for VQA: coming soon.
+* Our training question and answer data for VQA2.0: [Baidu Pan](https://pan.baidu.com/s/1o7RME86#list/path=%2FVQA2.0%20data).
 
 ## Training from scratch
 
 Set the arguments and run `train_VQA.py`.
 
 ## Pretrained models
-Coming soon. The best single model accuracy on `test-dev` of VQA-1.0 and VQA-2.0 with skip-thought vector initialization and Visual Genome training data are **67.19** and **64.73** respectively.
+The best single model accuracy on `test-dev` of VQA-1.0 and VQA-2.0 with skip-thought vector initialization and Visual Genome training data are **67.19** and **64.78** respectively. [Here](https://pan.baidu.com/s/1o7RME86#list/path=%2FVQA2.0%20data%2Fmodel) is the model on VQA-2.0.
 
 ## Citation
 
